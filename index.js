@@ -80,24 +80,36 @@ app.get('/playlist', async function(req, res){
         console.log(error);
     }
     // console.log(newPlaylist);
+    
 
     var link = newPlaylist.body.external_urls.spotify;
     console.log("Link: " + link);
     var playlistId = newPlaylist.body.id;
 
+
     // todo - make this a POST request with song data in body
     try {
-        var songURIs = await helpers.getSpotifyURIs([{"artist": "Childish Gambino", "art":"3005"}, {"artist": "juice WorlD", "art":"robbery"}], "songs");
+        var songURIs = await helpers.getSongURIs([{"artist": "Childish Gambino", "art":"3005"}, {"artist": "juice WorlD", "art":"robbery"}]);
     } catch (error) {
         console.log(error);
     }
     // console.log(songURIs);
+
+    /*
+    try {
+        var albumURIs = await helpers.getAlbumURIs(["awaken my love", "legends never die"]);
+    } catch (error) {
+        console.log(error);
+    }
+    // console.log(albumURIs);
+    */
 
     try {
         var addSongs = await spotify.addTracksToPlaylist(playlistId, songURIs);
     } catch (error) {
         console.log(error)
     }
+
     // console.log(addSongs);
 
     res.send("Playlist Created!")
