@@ -1,15 +1,9 @@
 const express    = require('express');
-const SpotifyApi = require('spotify-web-api-node');
 const bodyParser = require('body-parser');
 const axios      = require('axios')
-
+const helpers    = require('./helpers');
+const spotify    = require('./spotifyClient');
 require('dotenv').config()
-
-const spotify = new SpotifyApi({
-    clientId: process.env.CLIENT_ID,
-    clientSecret: process.env.CLIENT_SECRET,
-    redirectUri: process.env.REDIRECT_URI
-});
 
 const app = express();
 app.use(bodyParser.json());
@@ -91,11 +85,16 @@ app.get('/playlist', async function(req, res){
     console.log("Link: " + link);
     var playlistId = newPlaylist.body.id;
 
-    // todo - function to return array of spotify urls here
+    // todo - make this a POST request with song data in body
     try {
-        var addSongs = await spotify.addTracksToPlaylist(playlistId, 
-            ["spotify:track:4iV5W9uYEdYUVa79Axb7Rh", "spotify:track:1301WleyT98MSxVHPZCA6M"]
-        );
+        var songURIs = await helpers.getSpotifyURIs([{"artist": "Childish Gambino", "art":"3005"}, {"artist": "juice WorlD", "art":"robbery"}], "songs");
+    } catch (error) {
+        console.log(error);
+    }
+    // console.log(songURIs);
+
+    try {
+        var addSongs = await spotify.addTracksToPlaylist(playlistId, songURIs);
     } catch (error) {
         console.log(error)
     }
