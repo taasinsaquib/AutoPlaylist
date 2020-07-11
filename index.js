@@ -16,7 +16,7 @@ app.use(bodyParser.json());
 
 app.get('/login', (req, res) => {
     // to start using the app, navigate here in your browser
-    var scopes = 'playlist-modify-public playlist-modify-private';
+    var scopes = 'playlist-modify-public playlist-modify-private user-read-email user-read-private';
 
     const url = 'https://accounts.spotify.com/authorize' +
     '?response_type=code' +
@@ -30,7 +30,7 @@ app.get('/login', (req, res) => {
 
 app.get('/auth', async function(req, res){
     // redirect uri as entered in spotify app dashboard and in env variables
-    console.log(req.query.code);
+    // console.log(req.query.code);
     // check req.query.error if there's an error
 
     // need params for form-urlencoded
@@ -50,15 +50,58 @@ app.get('/auth', async function(req, res){
         var token = await axios.post('https://accounts.spotify.com/api/token', params, headers);
     } catch (error) {
         console.log(error)
+        res.send("ERROR: " + error)
     }
 
     // confirm response is good
     // console.log(token.data);
 
     // const refresh_token = token.data.refresh_token; // save refresh token for later use if needed
+    // console.log("Refresh token: " + token.data.refresh_token)
+    console.log("Access token: " + token.data.access_token)
+
     spotify.setAccessToken(token.data.access_token);
 
     res.send("User authenticated!");
+});
+
+app.get('/playlist', async function(req, res){
+
+    // todo - remove later, just for dev purposes
+    spotify.setAccessToken(process.env.ACCESS_TOKEN);
+
+    // get current User ID
+    try {
+        var me = await spotify.getMe();
+    } catch (error) {
+        console.log(error);
+    }
+    // console.log(me);
+
+    var userId = me.body.id;
+
+    try {
+        var newPlaylist = await spotify.createPlaylist(userId, "My Auto Playlist :o", {public: true});
+    } catch (error) {
+        console.log(error);
+    }
+    // console.log(newPlaylist);
+
+    var link = newPlaylist.body.external_urls.spotify;
+    console.log("Link: " + link);
+    var playlistId = newPlaylist.body.id;
+
+    // todo - function to return array of spotify urls here
+    try {
+        var addSongs = await spotify.addTracksToPlaylist(playlistId, 
+            ["spotify:track:4iV5W9uYEdYUVa79Axb7Rh", "spotify:track:1301WleyT98MSxVHPZCA6M"]
+        );
+    } catch (error) {
+        console.log(error)
+    }
+    // console.log(addSongs);
+
+    res.send("Playlist Created!")
 });
 
 app.get('/', (req, res) => {
