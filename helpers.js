@@ -1,7 +1,7 @@
 const spotify = require('./spotifyClient');
 const axios   = require('axios');
 
-
+// give url for Reddit post in JSON form, scrape data
 async function scrapePost(url){
 
     var results = [];
@@ -46,7 +46,7 @@ async function scrapePost(url){
     return results;
 }
 
-music = [{"artist: ""Childish Gambino", "song":"3005"}, ...]
+//music = [{"artist: ""Childish Gambino", "song":"3005"}, ...]
 async function getSongURIs(songs){
     // todo - just here for dev, remove later
     spotify.setAccessToken(process.env.ACCESS_TOKEN);
@@ -97,4 +97,65 @@ async function getAlbumURIs(albums){
     return results;
 }
 
-module.exports = {getSongURIs, getAlbumURIs, scrapePost};
+// given a list of songs, create a playlist, search for the songs, and add the songs to the playlist
+// songs: [{"artist: ""Childish Gambino", "song":"3005"}, ...]
+// return: link to playlist if successful, "" if error
+async function autoPlaylist(songs){
+
+    // todo - remove later, just for dev purposes
+    spotify.setAccessToken(process.env.ACCESS_TOKEN);
+
+    // get current User ID
+    try {
+        var me = await spotify.getMe();
+    } catch (error) {
+        console.log(error);
+    }
+    // console.log(me);
+
+    var userId = me.body.id;
+
+    try {
+        var newPlaylist = await spotify.createPlaylist(userId, "My Auto Playlist :o", {public: true});
+    } catch (error) {
+        console.log(error);
+    }
+    // console.log(newPlaylist);
+    
+    var link = newPlaylist.body.external_urls.spotify;
+    console.log("Link: " + link);
+    var playlistId = newPlaylist.body.id;
+
+    // todo - make this a POST request with song data in body
+    try {
+        var songURIs = await getSongURIs(songs);
+    } catch (error) {
+        console.log(error);
+    }
+    // console.log(songURIs);
+
+    /*
+    try {
+        var albumURIs = await helpers.getAlbumURIs(["awaken my love", "legends never die"]);
+    } catch (error) {
+        console.log(error);
+    }
+    // console.log(albumURIs);
+    */
+
+    if(songURIs.length != 0){
+        try {
+            var addSongs = await spotify.addTracksToPlaylist(playlistId, songURIs);
+        } catch (error) {
+            console.log(error)
+        }
+        // console.log(addSongs);
+        
+        return link;
+        // res.redirect(link)
+    }
+
+    return "";
+}
+
+module.exports = {getSongURIs, getAlbumURIs, scrapePost, autoPlaylist};
