@@ -46,8 +46,7 @@ async function scrapePost(url){
     return results;
 }
 
-
-//music = [{"artist: ""Childish Gambino", "song":"3005"}, ...]
+music = [{"artist: ""Childish Gambino", "song":"3005"}, ...]
 async function getSongURIs(songs){
     // todo - just here for dev, remove later
     spotify.setAccessToken(process.env.ACCESS_TOKEN);
