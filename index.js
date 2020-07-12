@@ -1,22 +1,16 @@
 const express    = require('express');
-const SpotifyApi = require('spotify-web-api-node');
 const bodyParser = require('body-parser');
 const axios      = require('axios')
-
+const helpers    = require('./helpers');
+const spotify    = require('./spotifyClient');
 require('dotenv').config()
-
-const spotify = new SpotifyApi({
-    clientId: process.env.CLIENT_ID,
-    clientSecret: process.env.CLIENT_SECRET,
-    redirectUri: process.env.REDIRECT_URI
-});
 
 const app = express();
 app.use(bodyParser.json());
 
 app.get('/login', (req, res) => {
     // to start using the app, navigate here in your browser
-    var scopes = 'playlist-modify-public playlist-modify-private';
+    var scopes = 'playlist-modify-public playlist-modify-private user-read-email user-read-private';
 
     const url = 'https://accounts.spotify.com/authorize' +
     '?response_type=code' +
@@ -30,7 +24,7 @@ app.get('/login', (req, res) => {
 
 app.get('/auth', async function(req, res){
     // redirect uri as entered in spotify app dashboard and in env variables
-    console.log(req.query.code);
+    // console.log(req.query.code);
     // check req.query.error if there's an error
 
     // need params for form-urlencoded
@@ -50,15 +44,85 @@ app.get('/auth', async function(req, res){
         var token = await axios.post('https://accounts.spotify.com/api/token', params, headers);
     } catch (error) {
         console.log(error)
+        res.send("ERROR: " + error)
     }
 
     // confirm response is good
     // console.log(token.data);
 
     // const refresh_token = token.data.refresh_token; // save refresh token for later use if needed
+    // console.log("Refresh token: " + token.data.refresh_token)
+    console.log("Access token: " + token.data.access_token)
+
     spotify.setAccessToken(token.data.access_token);
 
     res.send("User authenticated!");
+});
+
+app.post("/data", async function(req, res){
+
+    res.send("cool");
+});
+
+app.post('/playlist', async function(req, res){
+
+    // todo - remove later, just for dev purposes
+    spotify.setAccessToken(process.env.ACCESS_TOKEN);
+
+    var songs = req.body.songs;
+
+    // get current User ID
+    try {
+        var me = await spotify.getMe();
+    } catch (error) {
+        console.log(error);
+    }
+    // console.log(me);
+
+    var userId = me.body.id;
+
+    try {
+        var newPlaylist = await spotify.createPlaylist(userId, "My Auto Playlist :o", {public: true});
+    } catch (error) {
+        console.log(error);
+    }
+    // console.log(newPlaylist);
+    
+    var link = newPlaylist.body.external_urls.spotify;
+    console.log("Link: " + link);
+    var playlistId = newPlaylist.body.id;
+
+    // todo - make this a POST request with song data in body
+    try {
+        var songURIs = await helpers.getSongURIs(songs);
+    } catch (error) {
+        console.log(error);
+    }
+    // console.log(songURIs);
+
+    /*
+    try {
+        var albumURIs = await helpers.getAlbumURIs(["awaken my love", "legends never die"]);
+    } catch (error) {
+        console.log(error);
+    }
+    // console.log(albumURIs);
+    */
+
+    if(songURIs.length != 0){
+        try {
+            var addSongs = await spotify.addTracksToPlaylist(playlistId, songURIs);
+        } catch (error) {
+            console.log(error)
+        }
+        // console.log(addSongs);
+        
+        res.send("Playlist created! - " + link);
+        // res.redirect(link)
+    }
+    else{
+        res.send("No songs found, playlist empty");
+    }
 });
 
 app.get('/', (req, res) => {
