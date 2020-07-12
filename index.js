@@ -61,6 +61,11 @@ app.get('/auth', async function(req, res){
 });
 
 
+/*
+req.body should have:
+either postUrl = "link to reddit json post" or songs = [{"artist": "rich brian", "song": "100 degrees"}]
+playlistName = "Name of Playlist"
+*/
 app.post('/playlist', async function(req, res){
 
     var songs = []
@@ -79,7 +84,7 @@ app.post('/playlist', async function(req, res){
     }
 
     // console.log(songs);
-    var playlist = await helpers.autoPlaylist(songs);
+    var playlist = await helpers.autoPlaylist(req.body.playlistName, songs);
 
     if(playlist == ""){
         playlist = "No songs found, playlist empty";

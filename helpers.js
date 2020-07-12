@@ -97,9 +97,10 @@ async function getAlbumURIs(albums){
 }
 
 // given a list of songs, create a playlist, search for the songs, and add the songs to the playlist
+// name: name of playlist
 // songs: [{"artist: ""Childish Gambino", "song":"3005"}, ...]
 // return: link to playlist if successful, "" if error
-async function autoPlaylist(songs){
+async function autoPlaylist(name, songs){
 
     // todo - remove later, just for dev purposes
     spotify.setAccessToken(process.env.ACCESS_TOKEN);
@@ -115,7 +116,7 @@ async function autoPlaylist(songs){
     var userId = me.body.id;
 
     try {
-        var newPlaylist = await spotify.createPlaylist(userId, "My Auto Playlist :o", {public: true});
+        var newPlaylist = await spotify.createPlaylist(userId, name, {public: true});
     } catch (error) {
         console.log(error);
     }
