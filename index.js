@@ -60,14 +60,29 @@ app.get('/auth', async function(req, res){
     res.send("User authenticated!");
 });
 
+
 app.post('/playlist', async function(req, res){
 
-    var songs = req.body.songs;
+    var songs = []
+    if(req.body.postUrl != null){
+        console.log("Scraping Reddit");
 
+        try {
+            songs = await helpers.scrapePost(req.body.postUrl);
+        } catch (error) {
+            console.log(error);
+        }
+    }
+    else if(req.body.songs != null){
+        console.log("User provided songs are being processed");
+        songs = req.body.songs;
+    }
+
+    // console.log(songs);
     var playlist = await helpers.autoPlaylist(songs);
 
     if(playlist == ""){
-        res.send("No songs found, playlist empty");
+        playlist = "No songs found, playlist empty";
     }
 
     res.send(playlist);

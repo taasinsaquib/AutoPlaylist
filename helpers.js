@@ -25,7 +25,7 @@ async function scrapePost(url){
 
     songs = post.slice(startLine, endLine);
 
-    var regex = /(?<artist>.*)\s-\s(?<song>.*)/m; 
+    var regex = /(?<artist>.*)\s-\s(?<song>.*)[^*]$/m;  // ignore lines ending in *, meaning not on spotify
 
     for (var s of songs){
         let n = s.replace(/&amp;/gm, "&");  // reddit formats & and ' weirdly
@@ -39,7 +39,6 @@ async function scrapePost(url){
         else{
             console.log("ERROR * Couldn't break up this song line * ", s)  // assumes that artist and song are separated by "-"
         }
-        
     }
 
     // console.dir(results, {'maxArrayLength': null});
@@ -54,14 +53,14 @@ async function getSongURIs(songs){
     var results = []
 
     for(const s of songs){
-        console.log(s);
+        // console.log(s);
         var searchStr = `track:${s.song} artist:${s.artist}`;
 
         try {
             var song = await spotify.searchTracks(searchStr, {limit: 1});
             results.push(song.body.tracks.items[0].uri)     // only return 1 result, so hardcode 0 index here
         } catch (error) {
-            console.log(`ERR: ${error} - Couldn't find song with artist: , song: ${s.song}`)
+            console.log(`ERR: ${error} - Couldn't find song with artist: ${s.artist}, song: ${s.song}`)
         }
     }
 
