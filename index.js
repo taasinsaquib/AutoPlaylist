@@ -59,10 +59,17 @@ app.get('/auth', async function(req, res){
     res.send("User authenticated!");
 });
 
-app.get('/playlist', async function(req, res){
+app.post("/data", async function(req, res){
+
+    res.send("cool");
+});
+
+app.post('/playlist', async function(req, res){
 
     // todo - remove later, just for dev purposes
     spotify.setAccessToken(process.env.ACCESS_TOKEN);
+
+    var songs = req.body.songs;
 
     // get current User ID
     try {
@@ -81,15 +88,13 @@ app.get('/playlist', async function(req, res){
     }
     // console.log(newPlaylist);
     
-
     var link = newPlaylist.body.external_urls.spotify;
     console.log("Link: " + link);
     var playlistId = newPlaylist.body.id;
 
-
     // todo - make this a POST request with song data in body
     try {
-        var songURIs = await helpers.getSongURIs([{"artist": "Childish Gambino", "art":"3005"}, {"artist": "juice WorlD", "art":"robbery"}]);
+        var songURIs = await helpers.getSongURIs(songs);
     } catch (error) {
         console.log(error);
     }
@@ -104,15 +109,20 @@ app.get('/playlist', async function(req, res){
     // console.log(albumURIs);
     */
 
-    try {
-        var addSongs = await spotify.addTracksToPlaylist(playlistId, songURIs);
-    } catch (error) {
-        console.log(error)
+    if(songURIs.length != 0){
+        try {
+            var addSongs = await spotify.addTracksToPlaylist(playlistId, songURIs);
+        } catch (error) {
+            console.log(error)
+        }
+        // console.log(addSongs);
+        
+        res.send("Playlist created! - " + link);
+        // res.redirect(link)
     }
-
-    // console.log(addSongs);
-
-    res.send("Playlist Created!")
+    else{
+        res.send("No songs found, playlist empty");
+    }
 });
 
 app.get('/', (req, res) => {

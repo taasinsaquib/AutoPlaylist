@@ -1,7 +1,7 @@
 const spotify    = require('./spotifyClient');
 
 /*
-music = [{"artist: ""Childish Gambino", "art":"3005"}, ...]
+music = [{"artist: ""Childish Gambino", "song":"3005"}, ...]
 type  = "songs" or "albums"
 */
 
@@ -12,21 +12,17 @@ async function getSongURIs(songs){
     var results = []
 
     for(const s of songs){
-        var searchStr = `track:${s.art} artist:${s.artist}`;
-        // console.log(searchStr);
+        console.log(s);
+        var searchStr = `track:${s.song} artist:${s.artist}`;
 
         try {
             var song = await spotify.searchTracks(searchStr, {limit: 1});
+            results.push(song.body.tracks.items[0].uri)     // only return 1 result, so hardcode 0 index here
         } catch (error) {
-            console.log(error)
+            console.log(`ERR: ${error} Couldn't find song with artist: , song: ${s.song}`)
         }
-
-        // console.log(song.body.tracks.items)
-        // only return 1 result, so hardcode 0 index here
-        results.push(song.body.tracks.items[0].uri)
     }
 
-    console.log(results);
     return results;
 }
 
