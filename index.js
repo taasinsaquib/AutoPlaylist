@@ -8,6 +8,7 @@ require('dotenv').config()
 const app = express();
 app.use(bodyParser.json());
 
+// todo - redirect here if unauthorized
 app.get('/login', (req, res) => {
     // to start using the app, navigate here in your browser
     var scopes = 'playlist-modify-public playlist-modify-private user-read-email user-read-private';
@@ -59,70 +60,32 @@ app.get('/auth', async function(req, res){
     res.send("User authenticated!");
 });
 
-app.post("/data", async function(req, res){
-
-    res.send("cool");
-});
 
 app.post('/playlist', async function(req, res){
 
-    // todo - remove later, just for dev purposes
-    spotify.setAccessToken(process.env.ACCESS_TOKEN);
+    var songs = []
+    if(req.body.postUrl != null){
+        console.log("Scraping Reddit");
 
-    var songs = req.body.songs;
-
-    // get current User ID
-    try {
-        var me = await spotify.getMe();
-    } catch (error) {
-        console.log(error);
-    }
-    // console.log(me);
-
-    var userId = me.body.id;
-
-    try {
-        var newPlaylist = await spotify.createPlaylist(userId, "My Auto Playlist :o", {public: true});
-    } catch (error) {
-        console.log(error);
-    }
-    // console.log(newPlaylist);
-    
-    var link = newPlaylist.body.external_urls.spotify;
-    console.log("Link: " + link);
-    var playlistId = newPlaylist.body.id;
-
-    // todo - make this a POST request with song data in body
-    try {
-        var songURIs = await helpers.getSongURIs(songs);
-    } catch (error) {
-        console.log(error);
-    }
-    // console.log(songURIs);
-
-    /*
-    try {
-        var albumURIs = await helpers.getAlbumURIs(["awaken my love", "legends never die"]);
-    } catch (error) {
-        console.log(error);
-    }
-    // console.log(albumURIs);
-    */
-
-    if(songURIs.length != 0){
         try {
-            var addSongs = await spotify.addTracksToPlaylist(playlistId, songURIs);
+            songs = await helpers.scrapePost(req.body.postUrl);
         } catch (error) {
-            console.log(error)
+            console.log(error);
         }
-        // console.log(addSongs);
-        
-        res.send("Playlist created! - " + link);
-        // res.redirect(link)
     }
-    else{
-        res.send("No songs found, playlist empty");
+    else if(req.body.songs != null){
+        console.log("User provided songs are being processed");
+        songs = req.body.songs;
     }
+
+    // console.log(songs);
+    var playlist = await helpers.autoPlaylist(songs);
+
+    if(playlist == ""){
+        playlist = "No songs found, playlist empty";
+    }
+
+    res.send(playlist);
 });
 
 app.get('/', (req, res) => {
